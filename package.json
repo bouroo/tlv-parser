@@ -1,6 +1,6 @@
 {
   "name": "tlv-parser",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Zero-dependency recursive TLV (Tag-Length-Value) parser in pure ES modules. Supports raw TLVNode[] or nested object keyed by tag.",
   "type": "module",
   "main": "src/index.js",
