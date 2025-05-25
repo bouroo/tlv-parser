@@ -1,0 +1,36 @@
+{
+  "name": "tlv-parser",
+  "version": "1.0.0",
+  "description": "Zero-dependency recursive TLV (Tag-Length-Value) parser in pure ES modules. Supports raw TLVNode[] or nested object keyed by tag.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bouroo/tlv-parser.git"
+  },
+  "keywords": [
+    "tlv",
+    "parser",
+    "tag-length-value",
+    "esmodule",
+    "clean-architecture",
+    "solid"
+  ],
+  "author": "Kawin Viriyaprasopsook <kawin.v@kkumail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bouroo/tlv-parser/issues"
+  },
+  "homepage": "https://github.com/bouroo/tlv-parser#readme"
+}
