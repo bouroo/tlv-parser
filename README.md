@@ -86,31 +86,6 @@ Each `TLVNode` has:
 
 ---
 
-## Project Structure
-
-```
-tlv-parser/
-├── src/
-│   ├── domain/
-│   │   └── TLVNode.js             # Domain entity
-│   ├── usecases/
-│   │   ├── TLVParser.js           # Core recursive parser
-│   │   └── TLVObjectifier.js      # Converts nodes → plain object
-│   ├── interfaces/
-│   │   └── IParser.js             # Parser interface
-│   ├── adapters/
-│   │   └── TLVParserAdapter.js    # Implements IParser, exposes dual API
-│   └── index.js                   # Entry-point exports parseTLV / parseTLVNodes
-├── test/                          # Live tests (node:test)
-│   ├── tlvParser.test.js
-│   └── tlvParserAdapter.test.js
-├── package.json
-├── LICENSE
-└── README.md
-```
-
----
-
 ## Contributing
 
 1. Fork the repository
