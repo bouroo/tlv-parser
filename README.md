@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/tlv-parser.svg)](https://www.npmjs.com/package/tlv-parser)
 [![downloads](https://img.shields.io/npm/dm/tlv-parser.svg)](https://www.npmjs.com/package/tlv-parser)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Build Status](https://github.com/bouroo/tlv-parser/actions/workflows/nodejs.yml/badge.svg)](https://github.com/bouroo/tlv-parser/actions)
+[![Build Status](https://github.com/bouroo/tlv-parser/actions/workflows/test.yml/badge.svg)](https://github.com/bouroo/tlv-parser/actions)
 
 Zero-dependency, recursive TLV (Tag-Length-Value) parser in pure ES Modules.
 Supports both a raw array of `TLVNode` objects and a nested plain-object keyed by tag.
