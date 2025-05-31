@@ -1,10 +1,17 @@
+/**
+ * Adapter implementing IParser to parse TLV strings into nodes or objects.
+ *
+
+ */
 import { IParser } from "../interfaces/IParser.js";
 import { TLVParser } from "../usecases/TLVParser.js";
 import { TLVObjectifier } from "../usecases/TLVObjectifier.js";
 
 export class TLVParserAdapter extends IParser {
   /**
-   * @param {{ maxDepth?: number }} [options]
+   * Initialize the TLVParserAdapter.
+   *
+   * @param {{ maxDepth?: number }} [options] - Optional parser settings.
    */
   constructor(options) {
     super();
@@ -13,8 +20,11 @@ export class TLVParserAdapter extends IParser {
   }
 
   /**
-   * @param {string} tlvString
-   * @returns {import('../domain/TLVNode.js').TLVNode[]}
+   * Parse a TLV string into raw TLVNode instances.
+   *
+   * @param {string} tlvString - TLV encoded string.
+   * @returns {import('../domain/TLVNode.js').TLVNode[]} Array of parsed TLV nodes.
+   * @throws {TypeError} When input is not a string.
    */
   parseNodes(tlvString) {
     if (typeof tlvString !== "string") {
@@ -24,8 +34,10 @@ export class TLVParserAdapter extends IParser {
   }
 
   /**
-   * @param {string} tlvString
-   * @returns {Record<string, any>}
+   * Parse a TLV string into a nested plain object keyed by tag.
+   *
+   * @param {string} tlvString - TLV encoded string.
+   * @returns {Record<string, any>} Nested object representation.
    */
   parseObject(tlvString) {
     const nodes = this.parseNodes(tlvString);
@@ -33,7 +45,10 @@ export class TLVParserAdapter extends IParser {
   }
 
   /**
-   * Default parse → object
+   * Default parse method returning nested object form.
+   *
+   * @param {string} tlvString - TLV encoded string.
+   * @returns {Record<string, any>} Parsed object.
    */
   parse(tlvString) {
     return this.parseObject(tlvString);

@@ -2,9 +2,17 @@
 
 import { TLVNode } from "../domain/TLVNode.js";
 
+/**
+ * Parses TLV-encoded strings into an array of TLVNode.
+ *
+
+ */
 export class TLVParser {
   /**
-   * @param {{ maxDepth?: number }} options
+   * Creates a new TLVParser.
+   *
+   * @param {{ maxDepth?: number }} options - Optional settings, including maximum nesting depth.
+
    */
   constructor(options = {}) {
     this.maxDepth = options.maxDepth ?? 20;
