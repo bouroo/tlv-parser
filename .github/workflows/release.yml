@@ -1,0 +1,79 @@
+name: release
+
+on:
+  release:
+    types: [published]
+  # Re-run a failed publish without cutting a new release.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Mints the OIDC token npm exchanges for short-lived publish credentials.
+  # This is what replaces a long-lived NPM_TOKEN secret.
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Use Node.js LTS
+        uses: actions/setup-node@v7
+        with:
+          node-version: "lts/*"
+          registry-url: https://registry.npmjs.org/
+
+      # The npm bundled with setup-node is usually older than trusted publishing
+      # requires, and an old npm reports the failure as a confusing 404 rather
+      # than a version error.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          REQUIRED=11.5.1
+          ACTUAL="$(npm --version)"
+          if [ "$(printf '%s\n%s\n' "$REQUIRED" "$ACTUAL" | sort -V | head -n1)" != "$REQUIRED" ]; then
+            echo "::error::npm $ACTUAL is older than $REQUIRED, which trusted publishing requires"
+            exit 1
+          fi
+          echo "npm $ACTUAL supports trusted publishing"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Release tag matches package.json
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "v$VERSION" != "$TAG" ]; then
+            echo "::error::release tag '$TAG' does not match package.json version 'v$VERSION'"
+            exit 1
+          fi
+          echo "Tag $TAG matches package.json version $VERSION"
+
+      - name: Version is not already on npm
+        run: |
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
+            echo "::error::$NAME@$VERSION is already published — bump the version first"
+            exit 1
+          fi
+          echo "$NAME@$VERSION is not yet published"
+
+      # No NODE_AUTH_TOKEN: npm exchanges this job's OIDC token for short-lived
+      # publish credentials and attaches a provenance attestation automatically.
+      - name: Publish via trusted publishing
+        run: npm publish --access public

@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Run tests on Node.js LTS
@@ -15,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Use Node.js LTS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "lts/*"
           cache: "npm"
@@ -28,3 +31,45 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      # The README advertises "zero-dependency"; assert it so the claim cannot
+      # quietly rot the first time someone reaches for a helper package.
+      - name: Assert the zero-dependency claim
+        run: |
+          node -e '
+            const pkg = require("./package.json");
+            const declared = Object.keys({
+              ...(pkg.dependencies ?? {}),
+              ...(pkg.peerDependencies ?? {}),
+              ...(pkg.optionalDependencies ?? {}),
+            });
+            if (declared.length > 0) {
+              console.error("::error::runtime dependencies declared: " + declared.join(", "));
+              process.exit(1);
+            }
+            console.log("no runtime dependencies declared");
+          '
+
+      # There is no build step, so the tarball is the product. Only src/ plus the
+      # usual metadata may ship; anything else reaching a consumer is a packaging
+      # mistake that no test would otherwise catch.
+      - name: Assert the published file set
+        run: |
+          npm pack --dry-run --json > "$RUNNER_TEMP/pack.json"
+          node -e '
+            const fs = require("fs");
+            const [info] = JSON.parse(
+              fs.readFileSync(process.env.RUNNER_TEMP + "/pack.json", "utf8"),
+            );
+            const paths = info.files.map((file) => file.path);
+            const metadata = new Set(["package.json", "README.md", "LICENSE"]);
+            const unexpected = paths.filter(
+              (path) => !path.startsWith("src/") && !metadata.has(path),
+            );
+            console.log("tarball (" + info.entryCount + " files): " + paths.join(", "));
+            if (unexpected.length > 0) {
+              console.error("::error::unexpected files would be published: " + unexpected.join(", "));
+              process.exit(1);
+            }
+            console.log("published file set is src/ plus metadata only");
+          '
