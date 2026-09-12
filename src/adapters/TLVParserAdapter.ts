@@ -1,41 +1,35 @@
+import type { TLVNode } from "../domain/TLVNode.js";
+import type { TLVObject } from "../domain/TLVObject.js";
 import { IParser } from "../interfaces/IParser.js";
-import { TLVParser } from "../usecases/TLVParser.js";
+import { TLVParser, type TLVParserOptions } from "../usecases/TLVParser.js";
 import { TLVObjectifier } from "../usecases/TLVObjectifier.js";
 
 export class TLVParserAdapter extends IParser {
-  /**
-   * @param {{ maxDepth?: number }} [options]
-   */
-  constructor(options) {
+  private readonly parser: TLVParser;
+  private readonly objectifier: TLVObjectifier;
+
+  constructor(options?: TLVParserOptions) {
     super();
     this.parser = new TLVParser(options);
     this.objectifier = new TLVObjectifier();
   }
 
-  /**
-   * @param {string} tlvString
-   * @returns {import('../domain/TLVNode.js').TLVNode[]}
-   */
-  parseNodes(tlvString) {
+  parseNodes(tlvString: string): TLVNode[] {
     if (typeof tlvString !== "string") {
       throw new TypeError("parseNodes expects a string");
     }
     return this.parser.parse(tlvString);
   }
 
-  /**
-   * @param {string} tlvString
-   * @returns {Record<string, any>}
-   */
-  parseObject(tlvString) {
+  parseObject(tlvString: string): TLVObject {
     const nodes = this.parseNodes(tlvString);
     return this.objectifier.objectify(nodes);
   }
 
   /**
-   * Default parse → object
+   * Default parse → object.
    */
-  parse(tlvString) {
+  override parse(tlvString: string): TLVObject {
     return this.parseObject(tlvString);
   }
 }

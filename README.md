@@ -5,7 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Build Status](https://github.com/bouroo/tlv-parser/actions/workflows/test.yml/badge.svg)](https://github.com/bouroo/tlv-parser/actions)
 
-Zero-dependency, recursive TLV (Tag-Length-Value) parser in pure ES Modules.
+Zero-dependency, recursive TLV (Tag-Length-Value) parser. Written in TypeScript and
+compiled to pure ES Modules, with type declarations included.
 Supports both a raw array of `TLVNode` objects and a nested plain-object keyed by tag.
 
 ---
@@ -18,6 +19,8 @@ Supports both a raw array of `TLVNode` objects and a nested plain-object keyed b
   - [parseTLVNodes (raw nodes)](#parsetlvnodes-raw-nodes)
 - [API](#api)
 - [Project Structure](#project-structure)
+- [Development](#development)
+- [Releasing](#releasing)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -70,7 +73,7 @@ console.log(nodes);
 
 ## API
 
-### parseTLV(tlvString: string): Record<string, any>
+### parseTLV(tlvString: string): TLVObject
 
 Parses a TLV-encoded string into a nested plain object keyed by tag.
 Values are either strings (leaf data) or nested objects (sub-TLVs).
@@ -83,6 +86,68 @@ Each `TLVNode` has:
 - `length`: number (parsed length)
 - `data`: string (raw data if no children)
 - `children`: `TLVNode[]` (empty if leaf)
+
+Both `TLVNode` and the `TLVObject` type are exported from the package root, so
+`instanceof` checks and return-type annotations work without reaching into
+internal paths.
+
+---
+
+## Project Structure
+
+```
+src/
+  domain/       TLVNode entity and the TLVObject result type
+  usecases/     TLVParser (recursive parse), TLVObjectifier (nodes → object)
+  interfaces/   IParser contract
+  adapters/     TLVParserAdapter, wiring the usecases together
+test/           node:test suites, exercising the built output
+```
+
+`src/` is TypeScript and is **not** published. `dist/` holds the compiled ES modules
+plus their `.d.ts` declarations, and is the only thing that ships.
+
+---
+
+## Development
+
+Requires [Bun](https://bun.sh) to transpile and Node to run the tests.
+
+```bash
+npm install
+npm run build      # bun transpiles src/*.ts → dist/*.js; tsc emits dist/*.d.ts
+npm test           # builds, then runs `node --test` against dist/
+```
+
+The tests import from `dist/`, so they exercise the artifact consumers actually
+receive rather than the sources — a broken build cannot pass the suite.
+
+---
+
+## Releasing
+
+Publishing is driven by GitHub Releases using npm
+[trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC), so no npm
+token is stored in this repository.
+
+The trusted publisher grants **stage-publish only**, so the workflow uploads into
+npm's staging area rather than publishing directly. Staged publishing defers the
+proof-of-presence (2FA) check to the approval step, which is what allows CI to run
+without a maintainer present. A human finishes it:
+
+```bash
+npm stage list            # find the stage id
+npm stage approve <id>    # publishes it (2FA required)
+npm stage reject <id>     # discards it
+```
+
+Then cut the release as usual:
+
+```bash
+npm version patch
+git push --follow-tags
+gh release create v1.0.3 --generate-notes
+```
 
 ---
 

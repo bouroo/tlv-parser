@@ -1,6 +1,9 @@
+import type { TLVNode } from "../domain/TLVNode.js";
+import type { TLVObject } from "../domain/TLVObject.js";
+
 export class TLVObjectifier {
-  objectify(nodes) {
-    const result = {};
+  objectify(nodes: TLVNode[]): TLVObject {
+    const result: TLVObject = {};
     for (const node of nodes) {
       if (node.hasChildren()) {
         result[node.tag] = this.objectify(node.children);
