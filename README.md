@@ -32,8 +32,8 @@ Supports both a raw array of `TLVNode` objects and a nested plain-object keyed b
 # via npm
 npm install tlv-parser
 
-# or yarn
-yarn add tlv-parser
+# or bun
+bun add tlv-parser
 ```
 
 ---
@@ -50,13 +50,13 @@ const tlv = '0046000600000101030140225202505252KGPGoQxQH5Z5RySO5102TH9104904A';
 const obj = parseTLV(tlv);
 console.log(obj);
 /* {
+  "51": "TH",
+  "91": "904A",
   "00": {
     "00": "000001",
     "01": "014",
     "02": "202505252KGPGoQxQH5Z5RySO"
-  },
-  "51": "TH",
-  "91": "904A"
+  }
 } */
 
 // 2) Get raw TLVNode[]
