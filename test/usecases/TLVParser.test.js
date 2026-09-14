@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { TLVParser } from "../src/usecases/TLVParser.js";
-import { TLVNode } from "../src/domain/TLVNode.js";
+import { TLVParser } from "../../src/usecases/TLVParser.js";
+import { TLVNode } from "../../src/domain/TLVNode.js";
 
 test("parse() – empty string → []", () => {
   const p = new TLVParser();
