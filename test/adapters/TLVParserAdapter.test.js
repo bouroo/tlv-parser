@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseTLV, parseTLVNodes } from "../../src/index.js";
-import { TLVNode } from "../../src/domain/TLVNode.js";
+import { parseTLV, parseTLVNodes } from "../../dist/index.js";
+import { TLVNode } from "../../dist/domain/TLVNode.js";
 
 const sample =
   "0046000600000101030140225202505252KGPGoQxQH5Z5RySO5102TH9104904A";

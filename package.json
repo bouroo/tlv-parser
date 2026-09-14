@@ -1,19 +1,25 @@
 {
   "name": "tlv-parser",
-  "version": "1.0.1",
-  "description": "Zero-dependency recursive TLV (Tag-Length-Value) parser in pure ES modules. Supports raw TLVNode[] or nested object keyed by tag.",
+  "version": "1.0.3",
+  "description": "Zero-dependency recursive TLV (Tag-Length-Value) parser, written in TypeScript and compiled to pure ES modules. Supports raw TLVNode[] or nested object keyed by tag.",
   "type": "module",
-  "main": "src/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "files": [
-    "src"
+    "dist"
   ],
   "scripts": {
-    "test": "node --test"
+    "build": "bun run build:js && bun run build:types",
+    "build:js": "bun build src/index.ts src/domain/TLVNode.ts src/interfaces/IParser.ts src/usecases/TLVParser.ts src/usecases/TLVObjectifier.ts src/adapters/TLVParserAdapter.ts --target=node --outdir dist --format=esm --no-bundle",
+    "build:types": "tsc -p tsconfig.json",
+    "test": "bun run build && node --test",
+    "prepack": "bun run build && node --test"
   },
   "repository": {
     "type": "git",
@@ -24,6 +30,7 @@
     "parser",
     "tag-length-value",
     "esmodule",
+    "typescript",
     "clean-architecture",
     "solid"
   ],
@@ -32,5 +39,8 @@
   "bugs": {
     "url": "https://github.com/bouroo/tlv-parser/issues"
   },
-  "homepage": "https://github.com/bouroo/tlv-parser#readme"
+  "homepage": "https://github.com/bouroo/tlv-parser#readme",
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
 }

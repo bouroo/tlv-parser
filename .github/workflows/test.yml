@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Run tests on Node.js LTS
@@ -15,10 +18,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      # bun transpiles src/*.ts; node still runs the tests and the checks.
+      - name: Set up bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Use Node.js LTS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "lts/*"
           cache: "npm"
@@ -26,5 +35,78 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      # tsc emits the .d.ts declarations and type-checks the program as a whole,
+      # so a type error fails here rather than reaching a consumer.
+      - name: Type-check and build
+        run: npm run build
+
+      - name: Run tests against the built output
+        run: node --test
+
+      # The README advertises "zero-dependency"; assert it so the claim cannot
+      # quietly rot the first time someone reaches for a helper package. Dev
+      # dependencies (typescript) are deliberately not counted.
+      - name: Assert the zero-dependency claim
+        run: |
+          node -e '
+            const pkg = require("./package.json");
+            const declared = Object.keys({
+              ...(pkg.dependencies ?? {}),
+              ...(pkg.peerDependencies ?? {}),
+              ...(pkg.optionalDependencies ?? {}),
+            });
+            if (declared.length > 0) {
+              console.error("::error::runtime dependencies declared: " + declared.join(", "));
+              process.exit(1);
+            }
+            console.log("no runtime dependencies declared");
+          '
+
+      # The package ships compiled output, so only dist/ plus the usual metadata
+      # may reach a consumer. --ignore-scripts keeps the prepack build from
+      # interleaving its output with the JSON this step parses.
+      - name: Assert the published file set
+        run: |
+          npm pack --dry-run --json --ignore-scripts > "$RUNNER_TEMP/pack.json"
+          node -e '
+            const fs = require("fs");
+            const [info] = JSON.parse(
+              fs.readFileSync(process.env.RUNNER_TEMP + "/pack.json", "utf8"),
+            );
+            const paths = info.files.map((file) => file.path);
+            const metadata = new Set(["package.json", "README.md", "LICENSE"]);
+            const unexpected = paths.filter(
+              (path) => !path.startsWith("dist/") && !metadata.has(path),
+            );
+            console.log("tarball (" + info.entryCount + " files): " + paths.join(", "));
+            if (unexpected.length > 0) {
+              console.error("::error::unexpected files would be published: " + unexpected.join(", "));
+              process.exit(1);
+            }
+            console.log("published file set is dist/ plus metadata only");
+          '
+
+      # Consumers import by package name, so every entry point must resolve to a
+      # file that actually shipped — a wrong path here is invisible until install.
+      - name: Assert the entry points resolve
+        run: |
+          node -e '
+            const fs = require("fs");
+            const pkg = require("./package.json");
+            const targets = {
+              main: pkg.main,
+              types: pkg.types,
+              "exports[\".\"].types": pkg.exports["."].types,
+              "exports[\".\"].import": pkg.exports["."].import,
+            };
+            let failed = false;
+            for (const [label, target] of Object.entries(targets)) {
+              if (typeof target !== "string" || !fs.existsSync(target)) {
+                console.error("::error::" + label + " does not resolve: " + target);
+                failed = true;
+                continue;
+              }
+              console.log(label + " -> " + target);
+            }
+            if (failed) process.exit(1);
+          '

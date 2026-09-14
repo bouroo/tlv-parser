@@ -1,19 +1,22 @@
-/**
- * Adapter implementing IParser to parse TLV strings into nodes or objects.
- *
-
- */
+import type { TLVNode } from "../domain/TLVNode.js";
+import type { TLVObject } from "../domain/TLVObject.js";
 import { IParser } from "../interfaces/IParser.js";
-import { TLVParser } from "../usecases/TLVParser.js";
+import { TLVParser, type TLVParserOptions } from "../usecases/TLVParser.js";
 import { TLVObjectifier } from "../usecases/TLVObjectifier.js";
 
+/**
+ * Adapter implementing IParser to parse TLV strings into nodes or objects.
+ */
 export class TLVParserAdapter extends IParser {
+  private readonly parser: TLVParser;
+  private readonly objectifier: TLVObjectifier;
+
   /**
    * Initialize the TLVParserAdapter.
    *
-   * @param {{ maxDepth?: number }} [options] - Optional parser settings.
+   * @param options - Optional parser settings.
    */
-  constructor(options) {
+  constructor(options?: TLVParserOptions) {
     super();
     this.parser = new TLVParser(options);
     this.objectifier = new TLVObjectifier();
@@ -22,11 +25,11 @@ export class TLVParserAdapter extends IParser {
   /**
    * Parse a TLV string into raw TLVNode instances.
    *
-   * @param {string} tlvString - TLV encoded string.
-   * @returns {import('../domain/TLVNode.js').TLVNode[]} Array of parsed TLV nodes.
+   * @param tlvString - TLV encoded string.
+   * @returns Array of parsed TLV nodes.
    * @throws {TypeError} When input is not a string.
    */
-  parseNodes(tlvString) {
+  parseNodes(tlvString: string): TLVNode[] {
     if (typeof tlvString !== "string") {
       throw new TypeError("parseNodes expects a string");
     }
@@ -36,21 +39,18 @@ export class TLVParserAdapter extends IParser {
   /**
    * Parse a TLV string into a nested plain object keyed by tag.
    *
-   * @param {string} tlvString - TLV encoded string.
-   * @returns {Record<string, any>} Nested object representation.
+   * @param tlvString - TLV encoded string.
+   * @returns Nested object representation.
    */
-  parseObject(tlvString) {
+  parseObject(tlvString: string): TLVObject {
     const nodes = this.parseNodes(tlvString);
     return this.objectifier.objectify(nodes);
   }
 
   /**
    * Default parse method returning nested object form.
-   *
-   * @param {string} tlvString - TLV encoded string.
-   * @returns {Record<string, any>} Parsed object.
    */
-  parse(tlvString) {
+  override parse(tlvString: string): TLVObject {
     return this.parseObject(tlvString);
   }
 }

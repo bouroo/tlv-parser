@@ -1,29 +1,26 @@
-// src/usecases/TLVParser.js
-
 import { TLVNode } from "../domain/TLVNode.js";
+
+export type TLVParserOptions = { maxDepth?: number };
 
 /**
  * Parses TLV-encoded strings into an array of TLVNode.
- *
-
  */
 export class TLVParser {
+  private readonly maxDepth: number;
+
   /**
    * Creates a new TLVParser.
    *
-   * @param {{ maxDepth?: number }} options - Optional settings, including maximum nesting depth.
-
+   * @param options - Optional settings, including maximum nesting depth.
    */
-  constructor(options = {}) {
+  constructor(options: TLVParserOptions = {}) {
     this.maxDepth = options.maxDepth ?? 20;
   }
 
   /**
-   * Parse a TLV‐encoded string into an array of TLVNode.
-   * @param {string} tlvString
-   * @returns {TLVNode[]}
+   * Parse a TLV-encoded string into an array of TLVNode.
    */
-  parse(tlvString) {
+  parse(tlvString: string): TLVNode[] {
     if (typeof tlvString !== "string") {
       throw new TypeError("TLVParser.parse: input must be a string");
     }
@@ -31,19 +28,19 @@ export class TLVParser {
   }
 
   /**
-   * Internal recursive parser over str[offset..end)
-   * @param {string} str
-   * @param {number} offset
-   * @param {number} end
-   * @param {number} depth
-   * @returns {TLVNode[]}
+   * Internal recursive parser over str[offset..end).
    */
-  _parseRange(str, offset, end, depth) {
+  private _parseRange(
+    str: string,
+    offset: number,
+    end: number,
+    depth: number,
+  ): TLVNode[] {
     if (depth > this.maxDepth) {
       throw new Error("TLVParser: maximum nesting depth exceeded");
     }
 
-    const nodes = [];
+    const nodes: TLVNode[] = [];
     let i = offset;
 
     // As long as we have at least a tag(2)+len(2)
@@ -51,7 +48,7 @@ export class TLVParser {
       // 1) Tag
       const tag = str.charAt(i) + str.charAt(i + 1);
 
-      // 2) Two‐digit length
+      // 2) Two-digit length
       const c2 = str.charCodeAt(i + 2),
         c3 = str.charCodeAt(i + 3);
       if (c2 < 48 || c2 > 57 || c3 < 48 || c3 > 57) {
@@ -67,7 +64,7 @@ export class TLVParser {
         );
       }
 
-      let node;
+      let node: TLVNode | undefined;
 
       // 3) Try recursive parse if there's room for a child header
       if (length >= 4) {
@@ -78,7 +75,7 @@ export class TLVParser {
             valueEnd,
             depth + 1,
           );
-          // verify children exactly fill this value‐segment
+          // verify children exactly fill this value-segment
           let sum = 0;
           for (const c of children) sum += 4 + c.length;
           if (children.length > 0 && sum === length) {
@@ -99,7 +96,7 @@ export class TLVParser {
       i = valueEnd;
     }
 
-    // If we're at top‐level, enforce no leftover bytes
+    // If we're at top-level, enforce no leftover bytes
     if (depth === 0 && i !== end) {
       throw new Error(`TLVParser: leftover bytes in range [${i},${end})`);
     }
